@@ -35,7 +35,7 @@ let media = [];
 // ROUTES
 // ====================
 
-// ✅ Health check (optional but helpful)
+// ✅ Health check
 app.get("/", (req, res) => {
   res.send("Gallery backend is running");
 });
@@ -45,7 +45,7 @@ app.get("/api/gallery", (req, res) => {
   res.json(media);
 });
 
-// ✅ Admin upload (name + password)
+// ✅ Admin upload (name + password REQUIRED)
 app.post("/api/upload", upload.array("files"), (req, res) => {
   const { name, password } = req.body;
 
@@ -66,14 +66,9 @@ app.post("/api/upload", upload.array("files"), (req, res) => {
   res.json({ message: "Files uploaded successfully" });
 });
 
-// ❌ Delete media (admin only)
+// ❌ Delete media (NO PASSWORD REQUIRED)
 app.delete("/api/delete/:index", (req, res) => {
-  const { name, password } = req.query;
   const index = parseInt(req.params.index);
-
-  if (name !== ADMIN_NAME || password !== ADMIN_PASS) {
-    return res.status(403).json({ message: "Unauthorized" });
-  }
 
   if (isNaN(index) || index < 0 || index >= media.length) {
     return res.status(400).json({ message: "Invalid index" });
