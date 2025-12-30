@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -15,7 +14,7 @@ const ADMIN_PASS = "shouya";
 
 // Multer setup (multiple files)
 const storage = multer.diskStorage({
-  destination: "uploads/",
+  destination: path.join(__dirname, "uploads"),
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
   }
@@ -40,7 +39,8 @@ app.post("/api/upload", upload.array("files"), (req, res) => {
   req.files.forEach(file => {
     const type = file.mimetype.startsWith("video") ? "video" : "image";
     media.push({
-      url: `http://localhost:4000/uploads/${file.filename}`,
+      // IMPORTANT: use request host, not localhost
+      url: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
       type
     });
   });
@@ -48,4 +48,9 @@ app.post("/api/upload", upload.array("files"), (req, res) => {
   res.json({ message: "Files uploaded successfully" });
 });
 
-app.listen(4000, () => console.log("Server running on http://localhost:4000"));
+// ✅ RENDER-COMPATIBLE PORT
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
