@@ -25,7 +25,7 @@ img, video {
 }
 
 button {
-  margin-top: 5px;
+  margin-top: 6px;
 }
 </style>
 </head>
@@ -43,7 +43,7 @@ button {
     <input class="form-control mb-2" name="name" placeholder="Name">
     <input class="form-control mb-2" name="password" type="password" placeholder="Password">
     <input class="form-control mb-2" type="file" name="files" multiple>
-    <button class="btn btn-primary">Upload</button>
+    <button class="btn btn-primary w-100">Upload</button>
   </form>
 
   <!-- 📸 GALLERY -->
@@ -51,7 +51,9 @@ button {
 </div>
 
 <script>
-/* 🔐 ADMIN MODE */
+// ====================
+// ADMIN MODE (UI ONLY)
+// ====================
 const params = new URLSearchParams(window.location.search);
 const isAdmin = params.get("admin") === "shin";
 
@@ -59,7 +61,9 @@ if (isAdmin) {
   document.getElementById("uploadForm").classList.remove("d-none");
 }
 
-/* 📸 LOAD GALLERY */
+// ====================
+// LOAD GALLERY
+// ====================
 const galleryDiv = document.getElementById("gallery");
 
 function loadGallery() {
@@ -76,13 +80,16 @@ function loadGallery() {
             <button class="btn btn-danger btn-sm w-100"
               onclick="deleteItem(${index})">
               Delete
-            </button>` : ""}
+            </button>
+          ` : ""}
         </div>
       `).join("");
     });
 }
 
-/* ⬆️ UPLOAD */
+// ====================
+// UPLOAD (PASSWORD REQUIRED)
+// ====================
 document.getElementById("uploadForm").addEventListener("submit", e => {
   e.preventDefault();
   const formData = new FormData(e.target);
@@ -97,16 +104,21 @@ document.getElementById("uploadForm").addEventListener("submit", e => {
   });
 });
 
-/* ❌ DELETE (ADMIN ONLY) */
+// ====================
+// DELETE (NO PASSWORD)
+// ====================
 function deleteItem(index) {
   if (!confirm("Delete this item?")) return;
 
   fetch(`https://public-gallery-1.onrender.com/api/delete/${index}`, {
     method: "DELETE"
-  }).then(() => loadGallery());
+  })
+  .then(() => loadGallery());
 }
 
-/* 🚀 INIT */
+// ====================
+// INIT
+// ====================
 loadGallery();
 </script>
 
