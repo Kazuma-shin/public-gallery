@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public Gallery</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+img, video { width: 100%; border-radius: 12px; }
+</style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+  <h1 class="text-center mb-4">Public Gallery</h1>
+
+  <!-- 🔐 ADMIN UPLOAD (HIDDEN BY DEFAULT) -->
+  <form id="uploadForm" class="card p-3 mb-4 d-none">
+    <h5>Admin Upload</h5>
+    <input class="form-control mb-2" name="name" placeholder="Name">
+    <input class="form-control mb-2" name="password" type="password" placeholder="Password">
+    <input class="form-control mb-2" type="file" name="files" multiple>
+    <button class="btn btn-primary">Upload</button>
+  </form>
+
+  <!-- 📸 GALLERY -->
+  <div id="gallery" class="row g-3"></div>
+</div>
+
+<script>
+/* 🔐 SHOW ADMIN FORM ONLY WITH SECRET URL */
+const params = new URLSearchParams(window.location.search);
+if (params.get("admin") === "shin") {
+  document.getElementById("uploadForm").classList.remove("d-none");
+}
+
+/* 📸 GALLERY LOGIC */
+const galleryDiv = document.getElementById("gallery");
+
+function loadGallery() {
+  fetch("http://localhost:4000/api/gallery")
+    .then(res => res.json())
+    .then(data => {
+      galleryDiv.innerHTML = data.map(item => `
+        <div class="col-6 col-md-4">
+          ${item.type === "video"
+            ? `<video controls src="${item.url}"></video>`
+            : `<img src="${item.url}">`}
+        </div>
+      `).join("");
+    });
+}
+
+/* ⬆️ UPLOAD HANDLER */
+document.getElementById("uploadForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+
+  fetch("http://localhost:4000/api/upload", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.json())
+  .then(() => {
+    loadGallery();
+    e.target.reset();
+  });
+});
+
+/* 🚀 INITIAL LOAD */
+loadGallery();
+</script>
+
+</body>
+</html>
