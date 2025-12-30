@@ -3,20 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title style="color: white;"> <sup>❄️</sup>PHOTO DUMP <sup>❄️</sup></title>
+
+<title>❄️ PHOTO DUMP ❄️</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <style>
+body {
+  background-color: #000;
+  color: white;
+}
+
 img, video {
   width: 100%;
   border-radius: 12px;
 }
-  
+
+.card {
+  background-color: #111;
+  border: none;
+}
+
+button {
+  margin-top: 5px;
+}
 </style>
 </head>
-<body class="bg-light"  style="background-color: black;">
+
+<body>
 
 <div class="container py-4">
-  <h1 class="text-center mb-4">Public Gallery</h1>
+  <h1 class="text-center mb-4">
+    <sup>❄️</sup> PHOTO DUMP <sup>❄️</sup>
+  </h1>
 
   <!-- 🔐 ADMIN UPLOAD (HIDDEN BY DEFAULT) -->
   <form id="uploadForm" class="card p-3 mb-4 d-none">
@@ -32,30 +51,38 @@ img, video {
 </div>
 
 <script>
-/* 🔐 SHOW ADMIN FORM ONLY WITH SECRET URL */
+/* 🔐 ADMIN MODE */
 const params = new URLSearchParams(window.location.search);
-if (params.get("admin") === "shin") {
+const isAdmin = params.get("admin") === "shin";
+
+if (isAdmin) {
   document.getElementById("uploadForm").classList.remove("d-none");
 }
 
-/* 📸 GALLERY LOGIC */
+/* 📸 LOAD GALLERY */
 const galleryDiv = document.getElementById("gallery");
 
 function loadGallery() {
   fetch("https://public-gallery-1.onrender.com/api/gallery")
     .then(res => res.json())
     .then(data => {
-      galleryDiv.innerHTML = data.map(item => `
+      galleryDiv.innerHTML = data.map((item, index) => `
         <div class="col-6 col-md-4">
           ${item.type === "video"
             ? `<video controls src="${item.url}"></video>`
             : `<img src="${item.url}">`}
+
+          ${isAdmin ? `
+            <button class="btn btn-danger btn-sm w-100"
+              onclick="deleteItem(${index})">
+              Delete
+            </button>` : ""}
         </div>
       `).join("");
     });
 }
 
-/* ⬆️ UPLOAD HANDLER */
+/* ⬆️ UPLOAD */
 document.getElementById("uploadForm").addEventListener("submit", e => {
   e.preventDefault();
   const formData = new FormData(e.target);
@@ -64,14 +91,22 @@ document.getElementById("uploadForm").addEventListener("submit", e => {
     method: "POST",
     body: formData
   })
-  .then(res => res.json())
   .then(() => {
     loadGallery();
     e.target.reset();
   });
 });
 
-/* 🚀 INITIAL LOAD */
+/* ❌ DELETE (ADMIN ONLY) */
+function deleteItem(index) {
+  if (!confirm("Delete this item?")) return;
+
+  fetch(`https://public-gallery-1.onrender.com/api/delete/${index}`, {
+    method: "DELETE"
+  }).then(() => loadGallery());
+}
+
+/* 🚀 INIT */
 loadGallery();
 </script>
 
