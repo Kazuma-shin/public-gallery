@@ -2,17 +2,22 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// SIMPLE ADMIN CREDENTIALS
+// ====================
+// ADMIN CREDENTIALS
+// ====================
 const ADMIN_NAME = "shin";
 const ADMIN_PASS = "shouya";
 
-// Multer setup (multiple files)
+// ====================
+// MULTER SETUP
+// ====================
 const storage = multer.diskStorage({
   destination: path.join(__dirname, "uploads"),
   filename: (req, file, cb) => {
@@ -21,14 +26,26 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// ====================
+// IN-MEMORY GALLERY
+// ====================
 let media = [];
 
-// Public gallery
+// ====================
+// ROUTES
+// ====================
+
+// ✅ Health check (optional but helpful)
+app.get("/", (req, res) => {
+  res.send("Gallery backend is running");
+});
+
+// ✅ Public gallery
 app.get("/api/gallery", (req, res) => {
   res.json(media);
 });
 
-// Admin upload (name + password)
+// ✅ Admin upload (name + password)
 app.post("/api/upload", upload.array("files"), (req, res) => {
   const { name, password } = req.body;
 
@@ -38,17 +55,45 @@ app.post("/api/upload", upload.array("files"), (req, res) => {
 
   req.files.forEach(file => {
     const type = file.mimetype.startsWith("video") ? "video" : "image";
+
     media.push({
-      // IMPORTANT: use request host, not localhost
       url: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
-      type
+      type,
+      filename: file.filename
     });
   });
 
   res.json({ message: "Files uploaded successfully" });
 });
 
-// ✅ RENDER-COMPATIBLE PORT
+// ❌ Delete media (admin only)
+app.delete("/api/delete/:index", (req, res) => {
+  const { name, password } = req.query;
+  const index = parseInt(req.params.index);
+
+  if (name !== ADMIN_NAME || password !== ADMIN_PASS) {
+    return res.status(403).json({ message: "Unauthorized" });
+  }
+
+  if (isNaN(index) || index < 0 || index >= media.length) {
+    return res.status(400).json({ message: "Invalid index" });
+  }
+
+  const item = media[index];
+
+  // Remove file from disk
+  const filePath = path.join(__dirname, "uploads", item.filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+
+  media.splice(index, 1);
+  res.json({ message: "Deleted successfully" });
+});
+
+// ====================
+// START SERVER (RENDER SAFE)
+// ====================
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
